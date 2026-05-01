@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -26,8 +26,15 @@ async function startServer() {
     }
 
     if (!apiKey || apiKey === "your-api-key") {
-      console.warn("ELEVENLABS_API_KEY is missing or using placeholder. Falling back to native synthesis.");
-      return res.status(401).json({ error: "Cloud configuration required: Please add ELEVENLABS_API_KEY to secrets." });
+      console.warn(
+        "ELEVENLABS_API_KEY is missing or using placeholder. Falling back to native synthesis.",
+      );
+      return res
+        .status(401)
+        .json({
+          error:
+            "Cloud configuration required: Please add ELEVENLABS_API_KEY to secrets.",
+        });
     }
 
     try {
@@ -48,31 +55,40 @@ async function startServer() {
               similarity_boost: 0.75,
             },
           }),
-        }
+        },
       );
 
       if (response.status === 401) {
-        console.error("ElevenLabs Authentication failed. Check your API key in Secrets.");
+        console.error(
+          "ElevenLabs Authentication failed. Check your API key in Secrets.",
+        );
       } else if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("ElevenLabs API Error:", response.status, errorData);
       }
-      
+
       if (!response.ok) {
-        throw new Error(`ElevenLabs API responded with status ${response.status}`);
+        throw new Error(
+          `ElevenLabs API responded with status ${response.status}`,
+        );
       }
 
       const audioBuffer = await response.arrayBuffer();
-      console.log("Audio generated successfully, size:", audioBuffer.byteLength);
+      console.log(
+        "Audio generated successfully, size:",
+        audioBuffer.byteLength,
+      );
       res.set({
         "Content-Type": "audio/mpeg",
         "Content-Length": audioBuffer.byteLength,
-        "Cache-Control": "public, max-age=3600"
+        "Cache-Control": "public, max-age=3600",
       });
       res.send(Buffer.from(audioBuffer));
     } catch (error) {
       console.error("ElevenLabs proxy error:", error);
-      res.status(500).json({ error: "Internal server error during audio generation" });
+      res
+        .status(500)
+        .json({ error: "Internal server error during audio generation" });
     }
   });
 
@@ -92,7 +108,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
